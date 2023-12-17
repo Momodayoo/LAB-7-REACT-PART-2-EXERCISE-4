@@ -1,13 +1,30 @@
-import { useState, useEffect } from "react";
-import { useData } from "../hooks/useData";
+'use client'
 
+import React, { useState, useEffect } from "react";
+
+// Save as page.jsx in app/about
 const currencies = ['USD', 'AUD', 'NZD', 'GBP', 'EUR', 'SGD'];
 
-function BitcoinRates() {
+export default function BitcoinRates() {
 
     const [currency, setCurrency] = useState(currencies[0]);
-    const btcResponse = useData(`https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${currency}`);
-    const btcPrice = btcResponse ? btcResponse.bitcoin[currency.toLowerCase()] : 0;
+    const [btcPrice, setBtcPrice] = useState(0);
+
+
+    useEffect(() => {
+        let ignore = false;
+
+        fetch(`https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=${currency}`)
+            .then(response => response.json())
+            .then(json => {
+                if (!ignore) setBtcPrice(json.bitcoin[currency.toLowerCase()]);
+            });
+
+        // cleanup function - runs when unmounted or dependencies change
+        return () => {
+            ignore = true;
+        };            
+    }, [currency]); // effect dependencies
 
     const options = currencies.map(curr => <option value={curr} key={curr}>{curr}</option>)
 
@@ -19,10 +36,9 @@ function BitcoinRates() {
                     {options}
                 </select>
             </label>
-            <div>1 BTC is worth {btcPrice} {currency}</div>
+            <div className="exchange-rate-box"> 1 BTC = {btcPrice} {currency}{}</div>
         </div>
     )
 
 }
 
-export default BitcoinRates;
